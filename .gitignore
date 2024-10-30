@@ -1,0 +1,20 @@
+echo # Dependencies > .gitignore
+echo /node_modules >> .gitignore
+echo /vendor >> .gitignore
+echo # Environment >> .gitignore
+echo .env >> .gitignore
+echo .env.backup >> .gitignore
+echo # IDE >> .gitignore
+echo /.idea >> .gitignore
+echo /.vscode >> .gitignore
+echo # Storage >> .gitignore
+echo /storage/*.key >> .gitignore
+echo /public/storage >> .gitignore
+echo /public/hot >> .gitignore
+echo # Tests >> .gitignore
+echo .phpunit.result.cache >> .gitignore
+echo # Docker >> .gitignore
+echo /docker/mysql/data >> .gitignore
+echo # Windows >> .gitignore
+echo Thumbs.db >> .gitignore
+echo *.log >> .gitignore
