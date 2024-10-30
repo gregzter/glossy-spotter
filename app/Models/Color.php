@@ -6,8 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-class Color extends Model
-{
+class Color extends Model {
     protected $fillable = [
         'name',
         'is_glossy',
