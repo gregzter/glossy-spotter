@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
 
-class Color extends Model {
+class Color extends Model
+{
+    use HasTranslations;
+
     protected $fillable = [
         'name',
         'is_glossy',
@@ -18,21 +21,6 @@ class Color extends Model {
         'is_glossy' => 'boolean',
         'category' => 'string'
     ];
-
-    public function translations(): MorphMany
-    {
-        return $this->morphMany(Translation::class, 'translatable');
-    }
-
-    public function getTranslatedName(string $locale = null): string
-    {
-        $locale = $locale ?? app()->getLocale();
-
-        return $this->translations()
-            ->where('locale', $locale)
-            ->where('field', 'name')
-            ->first()?->value ?? $this->name;
-    }
 
     public function outfitItems(): HasMany
     {

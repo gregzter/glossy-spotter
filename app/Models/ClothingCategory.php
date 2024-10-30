@@ -6,18 +6,19 @@ use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Material extends Model
+class ClothingCategory extends Model
 {
     use HasTranslations;
 
     protected $fillable = ['name'];
 
     protected $casts = [
-        'name' => 'string',
+        'name' => 'string'
     ];
 
-    public function outfitItems(): HasMany
+    // Relation avec les types de vêtements
+    public function clothingTypes(): HasMany
     {
-        return $this->hasMany(OutfitItem::class);
+        return $this->hasMany(ClothingType::class);
     }
 }

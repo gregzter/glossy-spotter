@@ -6,3 +6,159 @@ exit
 \App\Models\Color::where('is_glossy', true)->get();
 \App\Models\Color::where('category', 'basic')->get();
 exit
+$material = \App\Models\Material::first();
+echo $material->name;
+echo $material->translate('name', 'fr');
+$color = \App\Models\Color::first();
+echo $color->name;
+echo $color->translate('name', 'fr');
+$material->setTranslation('name', 'es', 'satén');
+echo $material->translate('name', 'es');
+exit
+\App\Models\ClothingCategory::all();
+$category = \App\Models\ClothingCategory::where('name', 'tops')->first();
+cho $category->translate('name', 'en');
+echo $category->translate('name', 'en');
+echo $category->translate('name', 'fr');
+exit
+$category = \App\Models\ClothingCategory::where('name', 'tops')->first();
+echo $category->translate('name', 'fr');
+$category->clothingTypes->map(fn($type) => [
+    'en' => $type->translate('name', 'en'),
+    'fr' => $type->translate('name', 'fr')
+]);
+$type = \App\Models\ClothingType::where('name', 't_shirt')->first();
+echo $type->category->translate('name', 'fr');
+exit
+\App\Models\Country::all()->map(fn($country) => [
+    'code' => $country->code,
+    'en' => $country->translate('name', 'en'),
+    'fr' => $country->translate('name', 'fr')
+]);
+$france = \App\Models\Country::where('code', 'FR')->first();
+echo $france->translate('name', 'en');
+echo $france->translate('name', 'fr');
+$usa = \App\Models\Country::where('code', 'US')->first();
+echo $usa->translate('name', 'fr');
+exit
+\App\Models\Person::with('country')->get()->map(fn($person) => [
+    'name' => $person->full_name,
+    'display_name' => $person->display_name,
+    'country' => $person->country->translate('name', 'fr'),
+    'biography_fr' => $person->translate('biography', 'fr')
+]);
+\App\Models\Person::search('Marie')->first();
+$person = \App\Models\Person::first();
+echo $person->country->translate('name', 'fr');
+echo $person->translate('biography', 'fr');
+exit
+\App\Models\TvChannel::with('country')->get()->map(fn($channel) => [
+    'name' => $channel->translate('name', 'fr'),
+    'country' => $channel->country->translate('name', 'fr'),
+    'type' => $channel->type
+]);
+\App\Models\TvChannel::active()->byType('streaming')->get()->map(fn($channel) => $channel->translate('name', 'fr'));
+$france = \App\Models\Country::where('code', 'FR')->first();
+$france->tvChannels->map(fn($channel) => $channel->translate('name', 'fr'));
+exit
+\App\Models\TvShow::all()->map(fn($show) => [
+    'title' => [
+        'en' => $show->translate('title', 'en'),
+        'fr' => $show->translate('title', 'fr')
+    ],
+    'description' => [
+        'en' => $show->translate('description', 'en'),
+        'fr' => $show->translate('description', 'fr')
+    ],
+    'years' => $show->years_range,
+    'country' => $show->country->translate('name', 'fr')
+]);
+\App\Models\TvShow::ongoing()->get()->map(fn($show) => $show->display_title);
+\App\Models\TvShow::byYear(2021)->get()->map(fn($show) => $show->display_title);
+exit
+$show = \App\Models\TvShow::with('seasons.episodes')->first();
+$show->seasons->map(fn($season) => [
+    'season' => $season->display_title,
+    'episodes' => $season->episodes->map(fn($episode) => [
+        'code' => $episode->episode_code,
+        'title' => $episode->translate('title', 'fr'),
+        'air_date' => $episode->air_date->format('Y-m-d')
+    ])->toArray()
+]);
+\App\Models\TvEpisode::aired()->get()->map(fn($episode) => [
+    'code' => $episode->episode_code,
+    'title' => $episode->display_title
+]);
+exit
+\App\Models\TvProgram::with('episodes')->get()->map(fn($program) => [
+    'name' => $program->translate('name', 'fr'),
+    'channel' => $program->channel->translate('name', 'fr'),
+    'type' => $program->type,
+    'episodes' => $program->episodes->map(fn($episode) => [
+        'title' => $episode->translate('title', 'fr'),
+        'air_date' => $episode->air_date->format('Y-m-d')
+    ])->toArray()
+]);
+\App\Models\TvChannel::all()->pluck('name');
+exit
+\App\Models\TvShow::with('seasons.episodes')->get()->map(fn($show) => [
+    'show' => $show->translate('title', 'fr'),
+    'seasons' => $show->seasons->map(fn($season) => [
+        'number' => $season->season_number,
+        'episodes' => $season->episodes->map(fn($episode) => [
+            'code' => $episode->episode_code,
+            'title' => $episode->translate('title', 'fr'),
+        ])->toArray()
+    ])->toArray()
+]);
+\App\Models\TvProgram::with('channel', 'episodes')->get()->map(fn($program) => [
+    'name' => $program->translate('name', 'fr'),
+    'channel' => $program->channel->translate('name', 'fr'),
+    'episodes' => $program->episodes->map(fn($episode) => [
+        'title' => $episode->translate('title', 'fr'),
+        'date' => $episode->air_date->format('Y-m-d')
+    ])->toArray()
+]);
+\App\Models\TvShow::where('status', 'ongoing')->get()
+    ->map(fn($show) => $show->translate('title', 'fr'));
+\App\Models\TvProgram::where('type', 'news')->get()
+    ->map(fn($program) => $program->translate('name', 'fr'));
+exit
+\App\Models\SourceType::all()->map(fn($type) => [
+    'name' => $type->translate('name', 'fr'),
+    'sources_count' => $type->sources()->count()
+]);
+\App\Models\Source::with(['sourceType', 'tvShow', 'tvEpisode', 'tvProgram'])
+    ->get()
+    ->map(fn($source) => [
+        'title' => $source->display_title,
+        'type' => $source->sourceType->translate('name', 'fr'),
+        'show' => $source->tvShow ? $source->tvShow->translate('title', 'fr') : null,
+        'episode' => $source->tvEpisode ? $source->tvEpisode->translate('title', 'fr') : null
+    ]);
+exit
+[200~$spot = \App\Models\Spot::with(['comments.user', 'ratings', 'favorites'])->first();
+q
+$spot = \App\Models\Spot::with(['comments.user', 'ratings', 'favorites'])->first();
+[
+    'comments_count' => $spot->comments->count(),
+    'average_rating' => $spot->average_rating,
+    'favorites_count' => $spot->favorites->count(),
+    'latest_comment' => $spot->comments->first()->content
+];
+exit
+$spot = \App\Models\Spot::with(['comments.user', 'ratings', 'favorites'])->first();
+[
+    'comments_count' => $spot->comments->count(),
+    'average_rating' => $spot->average_rating,
+    'favorites_count' => $spot->favorites->count(),
+    'latest_comment' => $spot->comments->first()->content
+];
+exit
+$spot = \App\Models\Spot::with('media')->first();
+$spot->media->map(fn($media) => [
+    'type' => $media->type,
+    'status' => $media->status,
+    'dimensions' => $media->getDimensionsArray()
+]);
+exit
