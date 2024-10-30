@@ -1,0 +1,8 @@
+\App\Models\Material::all();
+exit
+\App\Models\Material::where('name', 'satin')->first();
+exit
+\App\Models\Color::count();
+\App\Models\Color::where('is_glossy', true)->get();
+\App\Models\Color::where('category', 'basic')->get();
+exit
