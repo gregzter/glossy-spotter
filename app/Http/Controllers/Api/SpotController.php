@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use Carbon\Carbon;
 
 class SpotController extends Controller
 {
@@ -19,8 +20,8 @@ class SpotController extends Controller
     public function index(Request $request): JsonResponse
     {
         $query = Spot::query()
-        ->with(['user:id,name,role', 'outfit:id,description', 'source.sourceType'])
-        ->where('status', 'published');
+            ->with(['user:id,name,role', 'outfit.outfitItems.material', 'source.sourceType'])
+            ->where('status', 'published');
 
         // Filtre par visibilité
         if ($request->has('visibility')) {
@@ -36,7 +37,33 @@ class SpotController extends Controller
             $query->where('visibility', 'public');
         }
 
-        // Ajout d'autres filtres potentiels ici...
+        // Recherche par texte
+        if ($request->has('search')) {
+            $search = $request->input('search');
+            $query->whereHas('source', function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('original_title', 'like', "%{$search}%");
+            });
+        }
+
+        // Filtre par date
+        if ($request->has('from')) {
+            $date = Carbon::parse($request->input('from'))->startOfDay();
+            $query->whereDate('created_at', '>=', $date);
+        }
+
+        if ($request->has('to')) {
+            $date = Carbon::parse($request->input('to'))->endOfDay();
+            $query->whereDate('created_at', '<=', $date);
+        }
+
+        // Filtre par matériau
+        if ($request->has('material')) {
+            $material = $request->input('material');
+            $query->whereHas('outfit.outfitItems.material', function ($q) use ($material) {
+                $q->where('name', $material);
+            });
+        }
 
         // Tri par date de création décroissante
         $query->latest();
@@ -92,15 +119,15 @@ class SpotController extends Controller
 
     public function update(Request $request, Spot $spot): JsonResponse
     {
-        if (! Gate::allows('edit-spot', $spot)) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
         try {
             $validated = $request->validate([
                 'visibility' => ['sometimes', Rule::in(['public', 'private', 'premium'])],
                 'is_adult_content' => ['sometimes', 'boolean'],
             ]);
+
+            if (! Gate::allows('edit-spot', $spot)) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
 
             $spot->update($validated);
 

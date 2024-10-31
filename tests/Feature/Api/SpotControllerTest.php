@@ -5,6 +5,10 @@ use App\Models\User;
 use App\Models\Outfit;
 use App\Models\Source;
 use App\Models\SourceType;
+use App\Models\Material;
+use App\Models\ClothingType;
+use App\Models\Color;
+use App\Models\ClothingCategory;
 use Illuminate\Testing\Fluent\AssertableJson;
 use function Pest\Laravel\get;
 use function Pest\Laravel\post;
@@ -305,8 +309,6 @@ test('cannot create spot with non-existent outfit_id', function () {
 });
 
 test('cannot update spot with invalid visibility', function () {
-    actingAs($this->user);
-
     $spot = Spot::factory()->create([
         'user_id' => $this->user->id,
         'outfit_id' => $this->outfit->id,
@@ -314,10 +316,10 @@ test('cannot update spot with invalid visibility', function () {
         'visibility' => 'public'
     ]);
 
-    $response = put("/api/v1/spots/{$spot->id}", [
+    actingAs($this->user);
+
+    $response = $this->putJson("/api/v1/spots/{$spot->id}", [
         'visibility' => 'invalid_value'
-    ], [
-        'Accept' => 'application/json'
     ]);
 
     $response->assertStatus(422)
@@ -432,4 +434,189 @@ test('rejected spot includes rejection information', function () {
     $response = get("/api/v1/spots/{$spot->id}");
 
     $response->assertStatus(403);
+});
+
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Nouveaux tests à ajouter dans SpotControllerTest.php
+
+test('can search spots by source title', function () {
+    $source1 = Source::factory()->create([
+        'title' => 'Unique Movie Title',
+        'source_type_id' => $this->sourceType->id
+    ]);
+    $source2 = Source::factory()->create([
+        'title' => 'Different Show Title',
+        'source_type_id' => $this->sourceType->id
+    ]);
+
+    Spot::factory()->create([
+        'visibility' => 'public',
+        'status' => 'published',
+        'outfit_id' => $this->outfit->id,
+        'source_id' => $source1->id,
+        'user_id' => $this->user->id
+    ]);
+
+    Spot::factory()->create([
+        'visibility' => 'public',
+        'status' => 'published',
+        'outfit_id' => $this->outfit->id,
+        'source_id' => $source2->id,
+        'user_id' => $this->user->id
+    ]);
+
+    $response = get('/api/v1/spots?search=Unique');
+
+    $response->assertStatus(200)
+        ->assertJsonCount(1, 'data')
+        ->assertJson(fn (AssertableJson $json) =>
+            $json->has('data.0.source.title')
+                 ->where('data.0.source.title', 'Unique Movie Title')
+                 ->etc()
+        );
+});
+
+test('can filter spots by date range', function () {
+    // Nettoyer les spots existants
+    Spot::query()->delete();
+
+    // Créer un spot hier
+    $yesterdaySpot = Spot::factory()->create([
+        'visibility' => 'public',
+        'status' => 'published',
+        'outfit_id' => $this->outfit->id,
+        'source_id' => $this->source->id,
+        'user_id' => $this->user->id,
+        'created_at' => now()->subDay()->startOfDay()
+    ]);
+
+    // Créer un spot aujourd'hui
+    $todaySpot = Spot::factory()->create([
+        'visibility' => 'public',
+        'status' => 'published',
+        'outfit_id' => $this->outfit->id,
+        'source_id' => $this->source->id,
+        'user_id' => $this->user->id,
+        'created_at' => now()->startOfDay()
+    ]);
+
+    $response = get('/api/v1/spots?from=' . now()->startOfDay()->format('Y-m-d'));
+
+    $response->assertOk()
+        ->assertJson(fn (AssertableJson $json) =>
+            $json->has('data', 1)
+                ->has('data.0', fn ($json) =>
+                    $json->where('id', $todaySpot->id)
+                         ->etc()
+                )
+                ->etc()
+        );
+});
+
+test('can filter spots by material type', function () {
+    $material1 = Material::factory()->create(['name' => 'latex']);
+    $material2 = Material::factory()->create(['name' => 'leather']);
+
+    $clothingCategory = ClothingCategory::factory()->create();
+    $clothingType = ClothingType::factory()->create(['clothing_category_id' => $clothingCategory->id]);
+
+    $outfit1 = Outfit::factory()->create();
+    $outfit2 = Outfit::factory()->create();
+
+    $outfit1->outfitItems()->create([
+        'clothing_type_id' => $clothingType->id,
+        'material_id' => $material1->id,
+        'color_id' => Color::factory()->create()->id,
+        'shine_level' => 'shiny'
+    ]);
+
+    $outfit2->outfitItems()->create([
+        'clothing_type_id' => $clothingType->id,
+        'material_id' => $material2->id,
+        'color_id' => Color::factory()->create()->id,
+        'shine_level' => 'shiny'
+    ]);
+
+    Spot::factory()->create([
+        'visibility' => 'public',
+        'status' => 'published',
+        'outfit_id' => $outfit1->id,
+        'source_id' => $this->source->id,
+        'user_id' => $this->user->id
+    ]);
+
+    Spot::factory()->create([
+        'visibility' => 'public',
+        'status' => 'published',
+        'outfit_id' => $outfit2->id,
+        'source_id' => $this->source->id,
+        'user_id' => $this->user->id
+    ]);
+
+    $response = get('/api/v1/spots?material=latex');
+
+    $response->assertOk()
+        ->assertJson(fn (AssertableJson $json) =>
+            $json->has('data', 1)
+                ->has('data.0.outfit.outfit_items.0', fn ($json) =>
+                    $json->where('material.name', 'latex')
+                         ->etc()
+                )
+                ->etc()
+        );
+});
+
+test('can combine multiple filters', function () {
+    $material = Material::factory()->create(['name' => 'latex']);
+    $outfit = Outfit::factory()->create();
+    $outfit->outfitItems()->create([
+        'clothing_type_id' => ClothingType::factory()->create()->id,
+        'material_id' => $material->id,
+        'color_id' => Color::factory()->create()->id,
+    ]);
+
+    // Spot qui correspond aux critères
+    Spot::factory()->create([
+        'visibility' => 'public',
+        'status' => 'published',
+        'outfit_id' => $outfit->id,
+        'source_id' => $this->source->id,
+        'user_id' => $this->user->id,
+        'created_at' => now()
+    ]);
+
+    // Spot qui ne correspond pas (date différente)
+    Spot::factory()->create([
+        'visibility' => 'public',
+        'status' => 'published',
+        'outfit_id' => $outfit->id,
+        'source_id' => $this->source->id,
+        'user_id' => $this->user->id,
+        'created_at' => now()->subDays(5)
+    ]);
+
+    $response = get('/api/v1/spots?material=latex&from=' . now()->subDay()->toDateString());
+
+    $response->assertStatus(200)
+        ->assertJsonCount(1, 'data');
+});
+
+test('returns empty result for no matches', function () {
+    Spot::factory(3)->create([
+        'visibility' => 'public',
+        'status' => 'published',
+        'outfit_id' => $this->outfit->id,
+        'source_id' => $this->source->id,
+        'user_id' => $this->user->id
+    ]);
+
+    $response = get('/api/v1/spots?search=NoMatchingTitle');
+
+    $response->assertStatus(200)
+        ->assertJsonCount(0, 'data');
 });

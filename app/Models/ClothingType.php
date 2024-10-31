@@ -6,10 +6,11 @@ use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class ClothingType extends Model
 {
-    use HasTranslations;
+    use HasTranslations, HasFactory;
 
     protected $fillable = [
         'clothing_category_id',

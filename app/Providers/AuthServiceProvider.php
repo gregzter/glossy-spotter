@@ -54,16 +54,14 @@ class AuthServiceProvider extends ServiceProvider
 
         // Modification de spots
         Gate::define('edit-spot', function(User $user, Spot $spot) {
-            if ($user->role === UserRole::ADMIN || $user->role === UserRole::SPOTTER_PLUS) {
+            // Le propriétaire peut toujours modifier son spot
+            if ($spot->user_id === $user->id) {
                 return true;
             }
 
-            if ($user->role === UserRole::SPOTTER) {
-                return $spot->user_id === $user->id;
-            }
-
-            if ($user->role === UserRole::VIEWER) {
-                return $spot->user_id === $user->id && $spot->status !== 'published';
+            // Les admin et spotter+ peuvent modifier n'importe quel spot
+            if (in_array($user->role, [UserRole::ADMIN, UserRole::SPOTTER_PLUS])) {
+                return true;
             }
 
             return false;
