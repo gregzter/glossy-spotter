@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Api\SpotController;
+use App\Http\Controllers\Api\SpotCommentController;
+use App\Http\Controllers\Api\SpotFavoriteController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -25,4 +27,20 @@ Route::prefix('v1')->group(function () {
         Route::post('spots/{spot}/validate', [SpotController::class, 'validate']);
         Route::post('spots/{spot}/reject', [SpotController::class, 'reject']);
     });
+
+    // Routes publiques pour les commentaires et favoris
+    Route::get('spots/{spot}/comments', [SpotCommentController::class, 'index']);
+    Route::get('spots/{spot}/favorites', [SpotFavoriteController::class, 'index']);
+
+    // Routes qui nécessitent une authentification
+    Route::middleware('auth:sanctum')->group(function () {
+        // Commentaires
+        Route::post('spots/{spot}/comments', [SpotCommentController::class, 'store']);
+        Route::put('spots/{spot}/comments/{comment}', [SpotCommentController::class, 'update']);
+
+        // Favoris
+        Route::post('spots/{spot}/favorite', [SpotFavoriteController::class, 'store']);
+        Route::delete('spots/{spot}/favorite', [SpotFavoriteController::class, 'destroy']);
+    });
+
 });

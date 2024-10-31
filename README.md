@@ -53,3 +53,6 @@ docker compose exec app php artisan migrate
 
 # Pour les logs :
 docker compose exec app cat storage/logs/laravel.log
+
+# Pour lancer tous les test
+docker compose exec app php artisan test

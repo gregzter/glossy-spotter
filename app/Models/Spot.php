@@ -92,7 +92,8 @@ class Spot extends Model
     public function favoritedBy(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'spot_favorites')
-                    ->withTimestamps();
+                    ->withTimestamps(['created_at'])  // Spécifie uniquement created_at
+                    ->withPivot('created_at');  // Spécifie les colonnes pivot à inclure
     }
 
     // Scopes pour la recherche et le filtrage
