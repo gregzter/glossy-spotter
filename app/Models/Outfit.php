@@ -5,10 +5,12 @@ namespace App\Models;
 use App\Traits\HasTranslations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Outfit extends Model
 {
     use HasTranslations;
+    use HasFactory;
 
     protected $fillable = [
         'description'
