@@ -49,3 +49,7 @@ docker compose exec app php artisan cache:clear
 
 # Pour les migrations
 docker compose exec app php artisan migrate
+
+
+# Pour les logs :
+docker compose exec app cat storage/logs/laravel.log
