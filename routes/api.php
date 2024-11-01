@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\SpotController;
 use App\Http\Controllers\Api\SpotCommentController;
 use App\Http\Controllers\Api\SpotFavoriteController;
+use App\Http\Controllers\Api\MediaController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +29,8 @@ Route::prefix('v1')->group(function () {
         Route::post('spots/{spot}/reject', [SpotController::class, 'reject']);
     });
 
+
+
     // Routes publiques pour les commentaires et favoris
     Route::get('spots/{spot}/comments', [SpotCommentController::class, 'index']);
     Route::get('spots/{spot}/favorites', [SpotFavoriteController::class, 'index']);
@@ -43,4 +46,11 @@ Route::prefix('v1')->group(function () {
         Route::delete('spots/{spot}/favorite', [SpotFavoriteController::class, 'destroy']);
     });
 
+
+    Route::middleware('auth:sanctum')->group(function () {
+        // Routes pour les médias
+        Route::post('spots/{spot}/media', [MediaController::class, 'store']);
+        Route::delete('spots/{spot}/media/{media}', [MediaController::class, 'destroy']);
+        Route::post('media/{media}/upscale', [MediaController::class, 'requestUpscale']);
+    });
 });

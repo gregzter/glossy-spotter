@@ -56,3 +56,9 @@ docker compose exec app cat storage/logs/laravel.log
 
 # Pour lancer tous les test
 docker compose exec app php artisan test
+
+
+# a exec sur le MySQL en root
+CREATE DATABASE IF NOT EXISTS testing;
+GRANT ALL PRIVILEGES ON testing.* TO 'glossy'@'%';
+FLUSH PRIVILEGES;

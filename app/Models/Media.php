@@ -18,7 +18,8 @@ class Media extends Model
         'status',
         'mime_type',
         'file_size',
-        'dimensions'
+        'dimensions',
+        'file_hash'
     ];
 
     protected $casts = [
